@@ -11,7 +11,7 @@ declare -r arg0="$(basename "$0")"
 
 usage() {
     printf '%s [DIR] [OPTION]...\n\n' "$(basename "$0")"
-    printf "Archive xhamster pages metadata from its sitemap and save them to DIR\n"
+    printf "Archive xhamster pages metadata from its sitemap and save them to DIR.\n"
     printf "Type of page depends on [-pvcCguU] options.\n"
     printf "Options:\n"
     printf "  -t NUM\tset number of used threads, by default set to 3\n"
