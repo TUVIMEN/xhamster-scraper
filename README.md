@@ -1,6 +1,6 @@
-# xhamster
+# xhamster-scraper
 
-A bash script for archiving xhamster videos,channels,creators,pornstars,galleries,users,posts metadata in json.
+A bash script for scraping xhamster videos,channels,creators,pornstars,galleries,users,posts metadata in json.
 
 ## Requirements
 
@@ -9,7 +9,7 @@ A bash script for archiving xhamster videos,channels,creators,pornstars,gallerie
 
 ## Installation
 
-    install -m 755 xhamster /usr/bin
+    install -m 755 xhamster-scraper /usr/bin
 
 ## Json format
 
@@ -19,24 +19,24 @@ Here's example of a [video](video-example.json), [pornstar](pornstar-example.jso
 
 Download metadata of videos in DIR
 
-    xhamster DIR -v
+    xhamster-scraper DIR -v
 
 Download metadata of pornstars in DIR
 
-    xhamster DIR -p
+    xhamster-scraper DIR -p
 
 Download metadata of creators in DIR
 
-    xhamster DIR -c
+    xhamster-scraper DIR -c
 
 Download metadata of channels in DIR
 
-    xhamster DIR -C
+    xhamster-scraper DIR -C
 
 Download metadata of galleries in DIR
 
-    xhamster DIR -g
+    xhamster-scraper DIR -g
 
 Download metadata of user in DIR from URL. Since users aren't in sitemap you have to compile list of users from previous results.
 
-    xhamster DIR -u URL
+    xhamster-scraper DIR -u URL
