@@ -17,26 +17,30 @@ Here's example of a [video](video-example.json), [pornstar](pornstar-example.jso
 
 ## Usage
 
-Download metadata of videos in DIR
+Download metadata of videos to DIR
 
     xhamster-scraper DIR -v
 
-Download metadata of pornstars in DIR
+Download metadata of pornstars to DIR
 
     xhamster-scraper DIR -p
 
-Download metadata of creators in DIR
+Download metadata of creators to DIR
 
     xhamster-scraper DIR -c
 
-Download metadata of channels in DIR
+Download metadata of channels to DIR
 
     xhamster-scraper DIR -C
 
-Download metadata of galleries in DIR
+Download metadata of galleries to DIR
 
     xhamster-scraper DIR -g
 
-Download metadata of user in DIR from URL. Since users aren't in sitemap you have to compile list of users from previous results.
+Download metadata of user to DIR from URL. Since users aren't in sitemap you have to compile list of users from previous results.
 
     xhamster-scraper DIR -u URL
+
+Download users from links in FILE to DIR
+
+    xhamster DIR -U FILE

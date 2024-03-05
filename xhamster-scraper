@@ -11,8 +11,8 @@ declare -r arg0="$(basename "$0")"
 
 usage() {
     printf '%s [DIR] [OPTION]...\n\n' "$(basename "$0")"
-    printf "Archive xhamster pages from its sitemap to DIR\n"
-    printf "Type of page depends on [-pvcCgu] options.\n"
+    printf "Archive xhamster pages metadata from its sitemap and save them to DIR\n"
+    printf "Type of page depends on [-pvcCguU] options.\n"
     printf "Options:\n"
     printf "  -t NUM\tset number of used threads, by default set to 3\n"
     printf "  -p\t\tpornstars\n"
@@ -20,7 +20,8 @@ usage() {
     printf "  -c\t\tcreators\n"
     printf "  -C\t\tchannels\n"
     printf "  -g\t\tgalleries\n"
-    printf "  -u USER\tuser\n"
+    printf "  -u USER\tget user from USER link\n"
+    printf "  -U USERS\tget users from links in USERS file\n"
     printf "  -h\t\thelp\n"
 }
 
@@ -442,6 +443,12 @@ do
         -C) get_channels;;
         -g) get_galleries;;
         -u) get_user_json "$2"; shift;;
+        -U)
+            while read -r i
+            do
+                get_user_json "$i"
+            done < "$2";
+            shift;;
         -h) usage; exit 0;;
         *) printf '%s: invalid argument -- %s\n' "$(basename "$0")" "$1" >&2; exit 1;;
     esac
