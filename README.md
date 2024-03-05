@@ -43,4 +43,4 @@ Download metadata of user to DIR from URL. Since users aren't in sitemap you hav
 
 Download users from links in FILE to DIR
 
-    xhamster DIR -U FILE
+    xhamster-scraper DIR -U FILE
