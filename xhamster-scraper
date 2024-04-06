@@ -28,14 +28,18 @@ usage() {
 get_video_json() {
     local -r e="${1##*-}"
     [ -e "v-$e" ] && return
-    echo "v-$e"
+    echo "v-$e" >&2
     local -r t="$(ucurl "$1" | hgrep 'script +id="initials-script"' | sed "s/^<script id='initials-script'>window.initials=//; s/;<\/script>$//")"
     local pages id g='2' t_comments
-    #echo "$1" #link
     pages="$(jq -r '.comments.counters.pages' <<< "$t")"
     id="$(jq -r '.videoModel.id' <<< "$t")"
     t_comments="$(mktemp)"
-    while [ "$g" -le "$pages" ]; do ucurl "https://xhamster.com/x-api?r=%5B%7B%22name%22%3A%22entityCommentCollectionFetch%22%2C%22requestData%22%3A%7B%22spamFolder%22%3Afalse%2C%22page%22%3A$g%2C%22commentId%22%3Anull%2C%22entity%22%3A%7B%22entityModel%22%3A%22videoModel%22%2C%22entityID%22%3A$id%7D%7D%7D%5D" -H 'X-Requested-With: XMLHttpRequest' | jq -Mc '.[].responseData'; ((g++)); done | sed '1!{s/^\[//}; $!{s/]$/,/}' > "$t_comments"
+    while [ "$g" -le "$pages" ]
+    do
+        echo "v-$e $g" >&2
+        ucurl "https://xhamster.com/x-api?r=%5B%7B%22name%22%3A%22entityCommentCollectionFetch%22%2C%22requestData%22%3A%7B%22spamFolder%22%3Afalse%2C%22page%22%3A$g%2C%22commentId%22%3Anull%2C%22entity%22%3A%7B%22entityModel%22%3A%22videoModel%22%2C%22entityID%22%3A$id%7D%7D%7D%5D" -H 'X-Requested-With: XMLHttpRequest' | jq -Mc '.[].responseData'
+        ((g++))
+    done | sed '1!{s/^\[//}; $!{s/]$/,/}' > "$t_comments"
 
     jq -Mc --arg 'link' "$1" --slurpfile 'comments' "$t_comments" '
         {
@@ -66,6 +70,7 @@ get_video_json() {
 }
 
 get_user_friends() {
+    echo "$1" >&2
     local t="$(ucurl "$1" | hgrep 'script +id="initials-script"' | sed "s/^<script id='initials-script'>window.initials=//; s/;<\/script>$//")"
     local pages id g='2'
     pages="$(jq -r '.collectionPagination.maxPages' <<< "$t")"
@@ -74,6 +79,7 @@ get_user_friends() {
     jq -Mc '.collectionOnPage' <<< "$t"
     while [ "$g" -le "$pages" ]
     do
+        echo "$1/$g" >&2
         ucurl "$1/$g" | hgrep 'script +id="initials-script"' | sed "s/^<script id='initials-script'>window.initials=//; s/;<\/script>$//" | jq -Mc '.collectionOnPage'
         ((g++))
     done
@@ -82,6 +88,7 @@ get_user_friends() {
 
 get_post() {
     local t1 t2 title text date g pages t_comments
+    echo "$1" >&2
     t1="$(ucurl "$1")"
     t2="$(hgrep 'script +id="initials-script"' <<< "$t1" | sed "s/^<script id='initials-script'>window.initials=//; s/;<\/script>$//")"
     title="$(hgrep 'div .story-item; h1; span | "%i\n"' <<< "$t1")"
@@ -91,7 +98,12 @@ get_post() {
     pages="$(jq -r '.comments.counters.pages' <<< "$t2")"
     id="$(jq -r '.storyModel.id' <<< "$t2")"
     t_comments="$(mktemp)"
-    while [ "$g" -le "$pages" ]; do ucurl "https://xhamster.com/x-api?r=%5B%7B%22name%22%3A%22entityCommentCollectionFetch%22%2C%22requestData%22%3A%7B%22spamFolder%22%3Afalse%2C%22page%22%3A$g%2C%22commentId%22%3Anull%2C%22entity%22%3A%7B%22entityModel%22%3A%22postModel%22%2C%22entityID%22%3A$id%7D%7D%7D%5D" -H 'X-Requested-With: XMLHttpRequest' | jq -Mc '.[].responseData'; ((g++)); done | sed '1!{s/^\[//}; $!{s/]$/,/}' > "$t_comments"
+    while [ "$g" -le "$pages" ]
+    do
+        echo "$1 $g" >&2
+        ucurl "https://xhamster.com/x-api?r=%5B%7B%22name%22%3A%22entityCommentCollectionFetch%22%2C%22requestData%22%3A%7B%22spamFolder%22%3Afalse%2C%22page%22%3A$g%2C%22commentId%22%3Anull%2C%22entity%22%3A%7B%22entityModel%22%3A%22postModel%22%2C%22entityID%22%3A$id%7D%7D%7D%5D" -H 'X-Requested-With: XMLHttpRequest' | jq -Mc '.[].responseData'
+        ((g++))
+    done | sed '1!{s/^\[//}; $!{s/]$/,/}' > "$t_comments"
     [ "$pages" -lt '2' ] && echo '[]' > "$t_comments"
     jq -Mc --rawfile 'comments' "$t_comments" --arg 'title' "$title" --arg 'text' "$text" --arg 'date' "$date" --arg 'id' "$id" '
     {
@@ -105,6 +117,7 @@ get_post() {
 }
 
 get_user_posts() {
+    echo "$1" >&2
     local t="$(ucurl "$1")"
     local next="$1" i
     
@@ -122,6 +135,7 @@ get_user_posts() {
 }
 
 get_user_favorites() {
+    echo "$1" >&2
     local -r t="$(ucurl "$1" | tr -d '\n\t\r\a')"
     local _tmp1 t2 next i
     {
@@ -135,6 +149,7 @@ get_user_favorites() {
             hgrep 'div +class="thumb-list__item .*" +data-video-id | "%(data-video-id)a "' <<< "$t2"
             next="$(hgrep 'ul +class="test-pager"; li +class="next"; a +href | "%(href)a\n"' <<< "$t2")"
             [ -z "$next" ] && break
+            echo "$next" >&2
         done
         printf '\a'
     done
@@ -149,6 +164,7 @@ get_user_favorites() {
             hgrep 'a +class="gallery-thumb__link thumb-image-container role-pop" +href | "%(href)a\t"' <<< "$t2"
             next="$(hgrep 'ul +class="test-pager"; li +class="next"; a +href | "%(href)a\n"' <<< "$t2")"
             [ -z "$next" ] && break
+            echo "$next" >&2
         done
     }
     echo
@@ -162,6 +178,7 @@ get_user_favorites() {
             hgrep 'div +class="item blog"; h2 +class="heading"; a +href | "%(href)a\t"' <<< "$t2"
             next="$(hgrep 'ul +class="test-pager"; li +class="next"; a +href | "%(href)a\n"' <<< "$t2")"
             [ -z "$next" ] && break
+            echo "$next" >&2
         done
     }
     echo
@@ -189,15 +206,19 @@ get_user_json() {
     local -r e="${1##*/users/}"
     [ -e "u-$e" ] && return
     [ -e "u-$e.lz" ] && return
-    echo "u-$e"
+    echo "u-$e" >&2
     local -r t1="$(ucurl "$1")"
     local -r t2="$(hgrep 'script +id="initials-script"' <<< "$t1" | sed "s/^<script id='initials-script'>window.initials=//; s/;<\/script>$//")"
     local pages id g='2' comments subscriberscount _tmp1 subscribers friends posts favorites t_comments t_subscribers t_friends t_posts t_favorites
-    #echo "$1" #link
     pages="$(jq -r '.comments.counters.pages' <<< "$t2")"
     id="$(jq -r '.displayUserModel.id' <<< "$t2")"
     subscriberscount="$(hgrep 'div +class="details-row" @m"data-tooltip=\\"Subscribers\\">"; b | "%i\n"' <<< "$t1")"
-    comments="$(while [ "$g" -le "$pages" ]; do ucurl "https://xhamster.com/x-api?r=%5B%7B%22name%22%3A%22entityCommentCollectionFetch%22%2C%22requestData%22%3A%7B%22spamFolder%22%3Afalse%2C%22page%22%3A$g%2C%22commentId%22%3Anull%2C%22entity%22%3A%7B%22entityModel%22%3A%22userModel%22%2C%22entityID%22%3A$id%7D%7D%7D%5D" -H 'X-Requested-With: XMLHttpRequest' | jq -Mc '.[].responseData'; ((g++)); done | sed '1!{s/^\[//}; $!{s/]$/,/}')"
+    comments="$(while [ "$g" -le "$pages" ]
+    do
+        echo "u-$e $g" >&2
+        ucurl "https://xhamster.com/x-api?r=%5B%7B%22name%22%3A%22entityCommentCollectionFetch%22%2C%22requestData%22%3A%7B%22spamFolder%22%3Afalse%2C%22page%22%3A$g%2C%22commentId%22%3Anull%2C%22entity%22%3A%7B%22entityModel%22%3A%22userModel%22%2C%22entityID%22%3A$id%7D%7D%7D%5D" -H 'X-Requested-With: XMLHttpRequest' | jq -Mc '.[].responseData'
+        ((g++))
+    done | sed '1!{s/^\[//}; $!{s/]$/,/}')"
     _tmp1="$(hgrep 'a +class="followable friends" +href | "%(href)a\n"' <<< "$t1")"
     [ -n "$_tmp1" ] && { friends="$(get_user_friends "$_tmp1")"; subscribers="$(get_user_friends "${_tmp1/\/friends/\/subscribers}")"; }
     _tmp1="$(hgrep 'a +class="followable posts" +href | "%(href)a\n"' <<< "$t1")"
@@ -226,10 +247,10 @@ get_user_json() {
         "gifts-total":.userGiftsTotal,
         "subscriberscount":$subscriberscount,
         "nft":.userNft,
-        "comments":(.comments.items+(if $comments == "" then [] else $comments | .[] end)),
-        "friends":(if $friends == "" then [] else ($friends | .[]) end),
-        "subscribers":(if $subscribers == "" then [] else ($subscribers | .[]) end),
-        "posts":(if $posts == "" then [] else ($posts | .[]) end),
+        "comments":(.comments.items+(if $comments == [] then [] else $comments | .[] end)),
+        "friends":(if $friends == [] then [] else ($friends | .[]) end),
+        "subscribers":(if $subscribers == [] then [] else ($subscribers | .[]) end),
+        "posts":(if $posts == [] then [] else ($posts | .[]) end),
         "favourites":$favorites
         }' <<< "$t2" > "u-$e"
     rm "$t_comments" "$t_friends" "$t_subscribers" "$t_posts"
@@ -238,7 +259,7 @@ get_user_json() {
 get_gallery_json() {
     local -r e="${1##*-}"
     [ -e "g-$e" ] && return
-    echo "g-$e"
+    echo "g-$e" >&2
     ucurl "$1" | hgrep 'script +id="initials-script"' | sed "s/^<script id='initials-script'>window.initials=//; s/;<\/script>$//" | jq -Mc '
         {
         "link":.photosGalleryModel.pageURL,
@@ -267,8 +288,8 @@ get_gallery_json() {
 get_creator_json() {
     local -r e="${1##*/creators/}"
     [ -e "c-$e" ] && return
+    echo "c-$e" >&2
     local -r t="$(ucurl "$1" | tr -d '\n\t\r\a')"
-    echo "c-$e"
     local _tmp1 _tmp2
     {
     echo "$1" #link
@@ -277,7 +298,7 @@ get_creator_json() {
     _tmp1="$(hgrep 'div +class="landing-info__logo-image" +style="background-image: .*" | "%(style)a\n"' <<< "$t")"
     _tmp2="${_tmp1#background-image: url(\'}"
     echo "${_tmp2%\');}" #avatar
-    _tmp1="$(hgrep 'a +class="root-[0-9a-f]* landing-info__logo-rank" | "%i\n"' <<< "$t")"
+    _tmp1="$(hgrep 'a .root-[0-9a-f]* .landing-info__logo-rank | "%i\n"' <<< "$t")"
     echo "${_tmp1#\#}" #rank
     hgrep 'div +class="body-[0-9a-f]* primary-[0-9a-f]* landing-info__metric-value" | "%i\n"' <<< "$t" #subscribers videos views
     echo "$(hgrep 'a ."userLink-.*" @m"Go to profile" +href | "%(href)a\n"' <<< "$t")" #user-link
@@ -302,7 +323,7 @@ get_creator_json() {
 get_pornstar_json() {
     local -r e="${1##*/pornstars/}"
     [ -e "p-$e" ] && return
-    echo "p-$e"
+    echo "p-$e" >&2
     local -r t="$(ucurl "$1" | tr -d '\n\t\r\a')"
     local _tmp1 _tmp2
     {
@@ -312,7 +333,7 @@ get_pornstar_json() {
     _tmp1="$(hgrep 'div +class="landing-info__logo-image" +style="background-image: .*" | "%(style)a\n"' <<< "$t")"
     _tmp2="${_tmp1#background-image: url(\'}"
     echo "${_tmp2%\');}" #avatar
-    _tmp1="$(hgrep 'a +class="root-[0-9a-f]* landing-info__logo-rank" | "%i\n"' <<< "$t")"
+    _tmp1="$(hgrep 'a .root-[0-9a-f]* .landing-info__logo-rank | "%i\n"' <<< "$t")"
     echo "${_tmp1#\#}" #rank
     hgrep 'div +class="body-[0-9a-f]* primary-[0-9a-f]* landing-info__metric-value" | "%i\n"' <<< "$t" #subscribers videos views
     echo "$(hgrep 'div +data-role="linking-vertical-wrapper"; a @M"<i" | "%i\t"' <<< "$t" | sed 's/  *//g')" #categories
@@ -332,7 +353,7 @@ get_pornstar_json() {
 get_channel_json() {
     local -r e="${1##*/channels/}"
     [ -e "C-$e" ] && return
-    echo "C-$e"
+    echo "C-$e" >&2
     local -r t="$(ucurl "$1" | tr -d '\n\t\r\a')"
     local _tmp1 _tmp2
     {
@@ -342,7 +363,7 @@ get_channel_json() {
     _tmp1="$(hgrep 'div +class="landing-info__logo-image" +style="background-image: .*" | "%(style)a\n"' <<< "$t")"
     _tmp2="${_tmp1#background-image: url(\'}"
     echo "${_tmp2%\');}" #avatar
-    _tmp1="$(hgrep 'a +class="root-[0-9a-f]* landing-info__logo-rank" | "%i\n"' <<< "$t")"
+    _tmp1="$(hgrep 'a .root-[0-9a-f]* .landing-info__logo-rank | "%i\n"' <<< "$t")"
     echo "${_tmp1#\#}" #rank
     hgrep 'div +class="body-[0-9a-f]* primary-[0-9a-f]* landing-info__metric-value" | "%i\n"' <<< "$t" #subscribers videos views
     echo "$(hgrep 'li .categories-container; a +href | "%i\t"' <<< "$t" | sed 's/  *//g')" #categories
@@ -363,12 +384,13 @@ get_creators() {
     local t next='https://xhamster.com/creators' i
     while [ -n "$next" ]
     do
+        echo "$next" >&2
         t="$(ucurl "$next")"
-        for i in $(hgrep 'div +class="pornstar-thumb-container"; a +class="pornstar-thumb-container__image" +href | "%(href)a\n"' <<< "$t")
+        for i in $(hgrep 'div .list-.*; div class=root-.*; a href .name-.* | "%(href)a\n"' <<< "$t")
         do
             get_creator_json "$i"
         done
-        next="$(hgrep 'ul +class="test-pager"; li +class="next"; a +href | "%(href)a\n"' <<< "$t")"
+        next="$(hgrep 'div .prev-next-list-button; a rel=next href | "%(href)a\n"' <<< "$t")"
     done
 }
 
@@ -376,12 +398,13 @@ get_pornstars() {
     local t next='https://xhamster.com/pornstars' i
     while [ -n "$next" ]
     do
+        echo "$next" >&2
         t="$(ucurl "$next")"
-        for i in $(hgrep 'div +class="pornstar-thumb-container"; a +class="pornstar-thumb-container__image" +href | "%(href)a\n"' <<< "$t")
+        for i in $(hgrep 'div .list-.*; div class=root-.*; a href .name-.* | "%(href)a\n"' <<< "$t")
         do
             get_pornstar_json "$i"
         done
-        next="$(hgrep 'ul +class="test-pager"; li +class="next"; a +href | "%(href)a\n"' <<< "$t")"
+        next="$(hgrep 'div .prev-next-list-button; a rel=next href | "%(href)a\n"' <<< "$t")"
     done
 }
 
@@ -389,12 +412,13 @@ get_channels() {
     local t next='https://xhamster.com/channels' i
     while [ -n "$next" ]
     do
+        echo "$next" >&2
         t="$(ucurl "$next")"
-        for i in $(hgrep 'div +class="channel-thumb-container"; a +class="channel-thumb-container__image-container-image" +href | "%(href)a\n"' <<< "$t")
+        for i in $(hgrep 'div .list-.*; div class=root-.*; a href .root-.* | "%(href)a\n"' <<< "$t")
         do
             get_channel_json "$i"
         done
-        next="$(hgrep 'ul +class="test-pager"; li +class="next"; a +href | "%(href)a\n"' <<< "$t")"
+        next="$(hgrep 'div .prev-next-list-button; a rel=next href | "%(href)a\n"' <<< "$t")"
     done
 }
 
@@ -402,12 +426,13 @@ get_videos() {
     local t next='https://xhamster.com/' i
     while [ -n "$next" ]
     do
+        echo "$next" >&2
         t="$(ucurl "$next")"
-        for i in $(hgrep 'a +class="root-[0-9a-f]* video-thumb-info__name role-pop with-dropdown" +href | "%(href)a\n"' <<< "$t")
+        for i in $(hgrep 'div .video-thumb; a href .root-.* | "%(href)a\n"' <<< "$t")
         do
             get_video_json "$i"
         done
-        next="$(hgrep 'a +class="prev-next-list-link prev-next-list-link--next" +rel="next" +href | "%(href)a\n"' <<< "$t")"
+        next="$(hgrep 'div .prev-next-list-button; a rel=next href | "%(href)a\n"' <<< "$t")"
     done
 }
 
@@ -415,12 +440,13 @@ get_galleries() {
     local t next='https://xhamster.com/photos' i
     while [ -n "$next" ]
     do
+        echo "$next" >&2
         t="$(ucurl "$next")"
-        for i in $(hgrep 'div +class="thumb-list__item gallery-thumb"; a +class="gallery-thumb__link thumb-image-container role-pop" +href | "%(href)a\n"' <<< "$t")
+        for i in $(hgrep 'div .gallery-thumb; a href .thumb-image-container | "%(href)a\n"' <<< "$t")
         do
             get_gallery_json "$i"
         done
-        next="$(hgrep 'ul +class="test-pager"; li +class="next"; a +href | "%(href)a\n"' <<< "$t")"
+        next="$(hgrep 'div .prev-next-list-button; a rel=next href | "%(href)a\n"' <<< "$t")"
     done
 }
 
