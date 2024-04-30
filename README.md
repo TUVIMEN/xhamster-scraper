@@ -4,7 +4,7 @@ A bash script for scraping xhamster videos,channels,creators,pornstars,galleries
 
 ## Requirements
 
- - [hgrep](https://github.com/TUVIMEN/hgrep)
+ - [reliq](https://github.com/TUVIMEN/reliq)
  - [jq](https://github.com/stedolan/jq)
 
 ## Installation
@@ -13,7 +13,7 @@ A bash script for scraping xhamster videos,channels,creators,pornstars,galleries
 
 ## Json format
 
-Here's example of a [video](video-example.json), [pornstar](pornstar-example.json), [creator](creator-example.json), [channel](channel-example.json), [user](user-example.json), [gallery](gallery-example.json).
+Here's example of a [video](video-example.json), [pornstar](pornstar-example.json), [creator](creator-example.json), [celebrity](celebrity-example.json), [channel](channel-example.json), [user](user-example.json), [gallery](gallery-example.json).
 
 ## Usage
 
@@ -32,6 +32,10 @@ Download metadata of creators to DIR
 Download metadata of channels to DIR
 
     xhamster-scraper DIR -C
+
+Download metadata of celebrities to DIR
+
+    xhamster-scraper DIR -e
 
 Download metadata of galleries to DIR
 
