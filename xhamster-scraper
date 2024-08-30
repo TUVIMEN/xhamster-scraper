@@ -75,7 +75,7 @@ get_user_friends() {
     local t="$(ucurl "$1" | reliq 'script #initials-script / sed "s/^<script id='\''initials-script'\''>window.initials=//; s/;<\/script>$//"')"
     local pages id g='2'
     pages="$(jq -r '.collectionPagination.maxPages' <<< "$t")"
-    
+
     {
     jq -Mc '.collectionOnPage' <<< "$t"
     while [ "$g" -le "$pages" ]
@@ -120,7 +120,7 @@ get_post() {
 get_user_posts() {
     local t
     local next="$1" i
-    
+
     while :
     do
         echo "$next" >&2
@@ -183,7 +183,7 @@ get_user_favorites() {
     }
     echo
     } | jq -MnRcs '
-        (inputs | split("\n")) as $lines | 
+        (inputs | split("\n")) as $lines |
 
         {
             "videos":(if $lines[0] == "" then [] else (($lines[0] | split(""))[:-1] | map(split("\t") | {
