@@ -212,7 +212,7 @@ get_user_json() {
     local pages id g='2' comments subscriberscount _tmp1 subscribers friends posts favorites t_comments t_subscribers t_friends t_posts t_favorites
     pages="$(jq -r '.comments.counters.pages' <<< "$t2")"
     id="$(jq -r '.displayUserModel.id' <<< "$t2")"
-    subscriberscount="$(reliq 'div .details-row m@"data-tooltip=\"Subscribers\">"; b | "%i\n"' <<< "$t1")"
+    subscriberscount="$(reliq 'div .details-row i@"data-tooltip=\"Subscribers\">"; b | "%i\n"' <<< "$t1")"
     comments="$(while [ "$g" -le "$pages" ]
     do
         echo "u-$e $g" >&2
@@ -357,7 +357,7 @@ get_pornstar_json() {
         . div .landing-info__logo-image style=b>"background-image: " | "%(style)v\n" / sed "s/.*('\''//;s/'\'').*//",
         . a .B>root-[0-9a-f]* .landing-info__logo-rank | "%i\n" / tr "#",
         . div .landing-info__metric-value | "%i\n",
-        div data-role="linking-vertical-wrapper"; a m@v>"<i" | "%i\t" / sed "s/&amp;/&/g" echo "" "\n",
+        div data-role="linking-vertical-wrapper"; a i@v>"<i" | "%i\t" / sed "s/&amp;/&/g" echo "" "\n",
         div .b>personalInfo-; ul; li .b>item; { div .b>label- | "%i", div .b>value- | "%i" / sed "s/ *<.*//" } | echo "" "\t" / echo "" "\n"
     ' <<< "$t"
 
